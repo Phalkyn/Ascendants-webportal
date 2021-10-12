@@ -1,189 +1,88 @@
-{{page-title pageTitle}}
-<h1>Combat {{model.id}}</h1>
+{{page-title this.pageTitle}}
+<h1>Combat {{this.model.id}}</h1>
 
-
-    <div class="row">
-        <div class="col col-xs-12">
-          <ul class="nav navbar-nav">    
-              <li class="dropdown">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-
-                <span class="btn btn-default" href="#">Combat Menu <span class="caret"></span></span> </a>
-                <ul class="dropdown-menu">
-                 <li> <a href="#" {{action (mut showAddCombatant) true}}>Add Combatant</a></li>
-                {{#if model.in_combat}}
-                <li> <a href="#" {{action "combatHero"}}>Hero Recovery</a></li>
-                {{/if}}
-                {{#if model.can_manage}}
-                 <li> <LinkTo @route="combat-setup" @model={{model.id}}>Setup NPCs</LinkTo></li>
-                 <li> <LinkTo @route="combat-teams" @model={{model.id}}>Setup Teams</LinkTo></li>
-                 <li> <a href="#" {{action "aiActions"}}>NPC AI Actions</a></li>
-                 <li> <a href="#" {{action (mut confirmStopCombat) true}}>Stop Combat</a></li>
-                {{/if}}
-                <li><LinkTo @route="combat-log" @model={{model.id}}>View Log</LinkTo></li> 
-
-                </ul>
-              </li>
-          </ul>
-          
-
-            <div class="pull-right">
-              
-              {{#if model.in_combat}}
-                      <button class="btn btn-warning" {{action 'leaveCombat'}} >Leave Combat</button>
-              {{else if currentUser.name}}
-                      <button class="btn btn-primary" {{action (mut showJoinCombat) true }} >Join Combat</button>
-              {{/if}}
-
-              {{#if model.can_manage}}
-                <a href="#" class="btn btn-primary" {{action 'newTurn'}}>New Turn</a>
-              {{/if}}
-              
-              
-            </div>
-            
-            <div class="clearfix"></div>
-            <p><LinkTo @route="combats"><i class="fa fa-long-arrow-alt-left" aria-hidden="true"></i> Back to Combat List</LinkTo></p>
-            
-        </div>
-    </div>
-    
-<div class="panel panel-default">    
-  <div class="panel-heading">
-    Combat Activity
-  </div>
-  <div class="panel-body">
-    
-    <div id="combat-log">
-      <p><i>Organized by {{model.organizer}}</i> </p>
-
-      <AnsiFormat @text={{combatLog}} />
-    </div>
-  
-    {{#if newCombatActivity}}
-    <div class="alert alert-warning">Your combat dashboard may be out of date.  You can get fresh data by editing something or reloading the page.</div>
-    {{/if}}
-  </div>
-</div>
-
-<div class="table-responsive">
-
-<table class="table">
-<tbody>
-<tr>
-    <th>Name</th>
-    <th>Damage</th>
-    <th>Weapon</th>
-    <th>Armor</th>
-    <th>Vehicle</th>
-    <th>Stance</th>
-    <th>Action</th>
-    <th></th>
-
-</tr>
-
-
-{{#each model.teams as |t| }}    
-
-<tr><td colspan="6"><h3>Team {{t.team}}</h3></td></tr>
-
-    {{#each t.combatants as |c| }}
-    
-    <tr>
-        <td>
-          {{#if c.is_npc}}
-            {{c.name}}
-          {{else}}
-            <LinkTo @route="char" @model={{c.name}}>{{c.name}}</LinkTo>
+<div class="action-buttons-spaced fs3-combat-controls">
+        
+    <DropdownMenu @id="combatMenu" @title="Combat Menu">
+          <li><a href="#" {{action (mut this.showAddCombatant) true}} class="dropdown-item">Add Combatant</a></li>
+          {{#if this.model.can_manage}}
+            <li><LinkTo @route="combat-setup" @model={{this.model.id}} class="dropdown-item">Setup NPCs</LinkTo></li>
+            <li><LinkTo @route="combat-teams" @model={{this.model.id}} class="dropdown-item">Setup Teams</LinkTo></li>
+            <li><a href="#" {{action "aiActions"}} class="dropdown-item">NPC AI Actions</a></li>
+            <li><a href="#" {{action (mut this.confirmStopCombat) true}} class="dropdown-item">Stop Combat</a></li>
           {{/if}}
-        </td>
-        
-        <td>
-            {{#if c.is_ko}}
-            <span class="combat-damage hint--left" aria-label="{{c.wound_display}}">
-                <i class="fa fa-crosshairs" aria-label="Knocked Out"></i>
-                K O 
-                <i class="fa fa-crosshairs" aria-hidden="true"></i>
-            </span>
-            {{else}}
-              <span class="combat-damage hint--left" aria-label="{{c.wound_display}}">                
-                {{#each c.damage_boxes}}
-                    <i class="fa fa-heartbeat combat-damage" aria-label="Damage Box"></i>
-                {{/each}}
-              </span>
-            {{/if}}
-        </td>
-        
-        <td>
-            {{c.weapon}} {{c.ammo}}
-        </td>
-        <td>
-            {{c.armor}}
-        </td>
-        
-        <td>
-            {{c.vehicle}}
-        </td>
-        
-        <td>
-            {{c.stance}}
-        </td>
-        
-        <td>
-            {{c.action}}
-        </td>
-        
-        <td>
-            {{#if currentUser}}
-                <LinkTo @route="combatant-edit" @model={{c.id}}>
-                <TooltipIcon @position="left" @message="Edit combatant." @icon="fa fa-edit" />
-                </LinkTo>
-                <a href="#" {{action (mut confirmRemoveCombatant) c.name }} >
-                  <TooltipIcon @position="left" @message="Remove combatant." @icon="fas fa-ban" />
-                </a>
-            {{/if}}
-        </td>
-    </tr>
+          <li><LinkTo @route="combat-log" @model={{this.model.id}} class="dropdown-item">View Log</LinkTo></li>
+    </DropdownMenu>
+      
+    <div class="fs3-combat-buttons">
     
-    {{/each}}
-  
+      {{#if this.model.in_combat}}
+              <button class="btn btn-warning" {{action 'leaveCombat'}} >Leave Combat</button>
+      {{else if this.currentUser.name}}
+              <button class="btn btn-primary" {{action (mut this.showJoinCombat) true }} >Join Combat</button>
+      {{/if}}
 
-{{/each}}
+      {{#if this.model.can_manage}}
+        <a href="#" class="btn btn-primary" {{action 'newTurn'}}>New Turn</a>
+      {{/if}}
+    </div>
 
-    
-</tbody>
-</table>
-
-<p><b>Luck Points:</b> {{model.luck_points}}</p>
 </div>
+          
+<div class="card card-default">    
+  <div class="card-heading">
+    Combat Activity
+    
+    ( 
+    {{#if this.model.scene}}
+      <i>Scene <LinkTo @route="scene-live" @model={{this.model.scene}}>{{this.model.scene}}</LinkTo></i>. 
+    {{/if}}
+    <i>Organized by {{this.model.organizer}}</i> 
+    )
+  </div>
+  <div class="card-body">
+    <a href="#" {{action "scrollLog"}}><i class="fas fa-angle-double-down"></i> Jump to End</a>
+    <div id="combat-log">
+      <AnsiFormat @text={{this.combatLog}} />
+    </div>
+  </div>
+</div>
+
+{{#if this.model.in_combat}}
+  <div class="fs3-combat-command">
+    <Input @value={{this.combatCommand}} @enter="sendCommand" size={{25}} />
+
+    <button class="btn btn-secondary" {{action 'sendCommand'}} >Send Command</button>
+    <div class="badge bg-info">{{this.commandResponse}}</div>
+  </div>
+{{/if}}
+
+<Fs3CombatHud @combat={{this.model}} />
+
+
+    <FlashMessages />
    
 
-        <FlashMessages />
-
-
-<BsModalSimple @title="Confirm Remove" @closeTitle="Cancel" @submitTitle="Confirm" @size={{null}} @fade={{false}} @open={{confirmRemoveCombatant}} @onSubmit={{action "removeCombatant" confirmRemoveCombatant}} @onHide={{action (mut confirmRemoveCombatant) false}}>
-    This will remove them from combat.  Are you sure?
-  </BsModalSimple>
   
-  <BsModalSimple @title="Confirm Stop" @closeTitle="Cancel" @submitTitle="Confirm" @size={{null}} @fade={{false}} @open={{confirmStopCombat}} @onSubmit={{action "stopCombat"}} @onHide={{action (mut confirmStopCombat) false}}>
+  <BsModalSimple @title="Confirm Stop" @closeTitle="Cancel" @submitTitle="Confirm" @size={{null}} @fade={{true}} @open={{this.confirmStopCombat}} @onSubmit={{action "stopCombat"}} @onHide={{action (mut this.confirmStopCombat) false}}>
       This will stop the combat.  Are you sure?
     </BsModalSimple>
 
-<BsModalSimple @title="Add Combatant" @closeTitle="Cancel" @submitTitle="Add" @size={{null}} @fade={{false}} @open={{showAddCombatant}} @onSubmit={{action "addCombatant"}} @onHide={{action (mut showAddCombatant) false}}>
+<BsModalSimple @title="Add Combatant" @closeTitle="Cancel" @submitTitle="Add" @size={{null}} @fade={{true}} @open={{this.showAddCombatant}} @onSubmit={{action "addCombatant"}} @onHide={{action (mut this.showAddCombatant) false}}>
         <p><b>Name(s):</b> </p>
-            <p><Input @type="text" @size={{25}} @value={{newCombatantName}} /></p>
-        <p><b>Type:</b> <PowerSelect @selected={{newCombatantType}} @options={{model.combatant_types}} @onChange={{action "combatantTypeChanged"}} as |type|>
+            <p><Input @type="text" size={{25}} @value={{this.newCombatantName}} /></p>
+        <p><b>Type:</b> <PowerSelect @selected={{this.newCombatantType}} @options={{this.model.combatant_types}} @onChange={{action "combatantTypeChanged"}} as |type|>
           {{type}}
         </PowerSelect></p>
         <div class="hint">You can add multiple combatants at once, as long as they're the same combatant type. List their names separated by spaces.</div>
   </BsModalSimple>
 
 
-<BsModalSimple @title="Join Combat" @closeTitle="Cancel" @submitTitle="Join" @size={{null}} @fade={{false}} @open={{showJoinCombat}} @onSubmit={{action "joinCombat"}} @onHide={{action (mut showJoinCombat) false}}>
-        <p><b>Type:</b> <PowerSelect @selected={{newCombatantType}} @options={{model.combatant_types}} @onChange={{action "combatantTypeChanged"}} as |type|>
+<BsModalSimple @title="Join Combat" @closeTitle="Cancel" @submitTitle="Join" @size={{null}} @fade={{true}} @open={{this.showJoinCombat}} @onSubmit={{action "joinCombat"}} @onHide={{action (mut this.showJoinCombat) false}}>
+        <p><b>Type:</b> <PowerSelect @selected={{this.newCombatantType}} @options={{this.model.combatant_types}} @onChange={{action "combatantTypeChanged"}} as |type|>
           {{type}}
         </PowerSelect></p>
   </BsModalSimple>
-
+  
 
 {{outlet}}

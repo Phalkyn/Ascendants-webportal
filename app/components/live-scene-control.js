@@ -12,10 +12,10 @@ export default Component.extend(AuthenticatedController, {
     selectLocation: false,
     managePoseOrder: false,
     characterCard: false,
+    characterCardInfo: null,
     newLocation: null,
     reportReason: null,
     poseType: null,
-    poseChar: null,
     commandResponse: null,
     gameApi: service(),
     flashMessages: service(),
@@ -24,12 +24,23 @@ export default Component.extend(AuthenticatedController, {
 
     updatePoseControls: function() {
       this.set('poseType', { title: 'Pose', id: 'pose' });
-      if (this.scene) {
-        this.set('poseChar', this.get('scene.poseable_chars')[0]);
+      if (this.scene && !this.get('scene.poseChar')) {
+        
+        let self = this;
+        this.scene.poseable_chars.forEach(c => {
+          if (!this.get('scene.poseChar') && self.scene.participants.any(w => w.name == c.name)) {
+            self.set('scene.poseChar', c);
+          }
+        });
+      
+        if (!this.get('scene.poseChar')) {
+          this.set('scene.poseChar', this.get('scene.poseable_chars')[0]);
+        }  
       }
     },
     
     didInsertElement: function() {
+      this._super(...arguments);
       this.updatePoseControls();
     },
     
@@ -48,22 +59,25 @@ export default Component.extend(AuthenticatedController, {
     poseOrderTypes: computed(function() {
       return [ '3-per', 'normal' ];
     }),
-    
-    characterCardInfo: computed('characterCard', function() {
-      let participant = this.get('scene.participants').find(p => p.name == this.characterCard);
-      return participant ? participant.char_card : {};
-    }),
-  
+      
     txtExtraInstalled: computed(function() {
-      return this.get('scene.extras_installed').some(e => e == 'txt');
+      return this.isExtraInstalled('txt');
     }),
     
     cookiesExtraInstalled: computed(function() {
-      return this.get('scene.extras_installed').some(e => e == 'cookies');
+      return this.isExtraInstalled('cookies');
     }),
     
     rpgExtraInstalled: computed(function() {
-      return this.get('scene.extras_installed').some(e => e == 'rpg');
+      return this.isExtraInstalled('rpg');
+    }),
+    
+    fateExtraInstalled: computed(function() {
+      return this.isExtraInstalled('fate');
+    }),
+    
+    diceExtraInstalled: computed(function() {
+      return this.isExtraInstalled('dice');
     }),
     
     sceneAlerts: computed('scene.{is_watching,reload_required}', 'scrollPaused', function() {
@@ -79,6 +93,10 @@ export default Component.extend(AuthenticatedController, {
       }
       return alertList;
     }),
+    
+    isExtraInstalled(name) {
+       return this.get('scene.extras_installed').any(e => e == name); 
+    },
     
     actions: { 
       locationSelected(loc) {
@@ -182,7 +200,7 @@ export default Component.extend(AuthenticatedController, {
           api.requestOne('addScenePose', { id: this.get('scene.id'),
               pose: pose, 
               pose_type: poseType,
-              pose_char: this.get('poseChar.id') })
+              pose_char: this.get('scene.poseChar.id') })
           .then( (response) => {
               if (response.error) {
                   return;
@@ -258,7 +276,19 @@ export default Component.extend(AuthenticatedController, {
       },
       
       poseCharChanged(newChar) { 
-        this.set('poseChar', newChar);
+        this.set('scene.poseChar', newChar);
+      },
+      
+      showCharCard(char) {
+        let api = this.gameApi;
+        api.requestOne('sceneCard', { char: char }, null)
+        .then( (response) => {
+            if (response.error) {
+                return;
+            }
+            this.set('characterCardInfo', response);
+            this.set('characterCard', true);
+        });
       },
       
       switchPoseOrderType(newType) {
@@ -288,7 +318,7 @@ export default Component.extend(AuthenticatedController, {
         let api = this.gameApi;
         this.set('confirmReportScene', false);
 
-        api.requestOne('reportScene', { id: this.get('scene.id'), reason: this.get('reportReason') })
+        api.requestOne('reportScene', { id: this.get('scene.id'), reason: this.reportReason })
         .then( (response) => {
             if (response.error) {
                 return;

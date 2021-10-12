@@ -16,6 +16,7 @@ export default Component.extend({
     destinationType: 'scene',
 
     didInsertElement: function() {
+      this._super(...arguments);
       let defaultAbility = this.abilities ? this.abilities[0] : '';
       this.set('rollString', defaultAbility);
     },
@@ -36,6 +37,11 @@ export default Component.extend({
         let vsName2 = this.vsName2;
         let pcRollSkill = this.pcRollSkill;
         let pcRollName = this.pcRollName;
+        
+        var sender;
+        if (this.scene) {
+          sender = this.get('scene.poseChar.name');
+        }
           
         if (!rollString && !vsRoll1 && !pcRollSkill) {
           this.flashMessages.danger("You haven't selected an ability to roll.");
@@ -81,7 +87,8 @@ export default Component.extend({
            vs_name1: vsName1,
            vs_name2: vsName2,
            pc_name: pcRollName,
-           pc_skill: pcRollSkill }, null)
+           pc_skill: pcRollSkill,
+           sender: sender }, null)
         .then( (response) => {
           if (response.error) {
             return;
